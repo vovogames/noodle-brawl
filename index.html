@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>面条人 Noodle Brawl</title>
+<meta name="description" content="A tiny black-and-white stick-figure brawler with six game-feel switches. 白底黑线的面条人横版小游戏，六个打击感开关。">
+<meta name="author" content="vovogames">
+<style>
+:root{--bg:#f4f4f2;--card:#fff;--fg:#111;--mute:#777;--line:#d6d6d3}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,"Noto Sans SC",sans-serif;margin:0;color-scheme:light}
+main{display:grid;gap:14px;justify-items:center;padding-block:14px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#wrap{position:relative;width:min(100%,calc((100vh - 110px) * 16 / 9),1600px);aspect-ratio:16/9;max-width:100%}
+canvas:focus{outline:none}
+canvas{display:block;width:100%;height:100%;border-radius:6px;background:#fff;box-shadow:0 0 0 1px var(--line);touch-action:none}
+.bar{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;color:var(--mute);font-size:14px}
+kbd{font:500 13px ui-monospace,Menlo,monospace;color:var(--fg);border:1px solid var(--line);background:#fff;border-bottom-width:2px;border-radius:4px;padding:0 5px}
+[hidden]{display:none!important}
+#start{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:6px;text-align:center;background:rgba(255,255,255,.82);border-radius:6px;cursor:pointer;padding:16px}
+#start h1{margin:0;font:700 clamp(28px,6vw,64px)/1.1 system-ui,"Noto Sans SC",sans-serif;letter-spacing:.02em}
+#start p{margin:0;color:var(--mute);font-size:clamp(13px,1.8vw,18px)}
+#start b{margin-top:10px;font-size:clamp(14px,2vw,20px);border:2px solid var(--fg);border-radius:99px;padding:4px 18px}
+#touch{display:none;width:min(100%,1600px);justify-content:space-between;gap:12px;user-select:none;-webkit-user-select:none}
+#touch .g{display:flex;gap:10px}
+#touch button{width:64px;height:64px;border-radius:50%;font-size:15px;padding:0;touch-action:none;background:#fff}
+#touch button.big{width:76px;height:76px;background:var(--fg);color:#fff;border-color:var(--fg)}
+@media (pointer:coarse){#touch{display:flex}.keys{display:none}}
+#sw{width:min(100%,1600px);display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+button{font:inherit;font-size:14px;color:var(--fg);background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 14px;cursor:pointer}
+button.on{background:var(--fg);color:#fff;border-color:var(--fg)}
+.note{color:var(--mute);font-size:13px;text-align:center;max-width:70ch;margin:0}
+#res{position:absolute;inset:0;display:grid;place-items:start center;background:rgba(255,255,255,.86);border-radius:6px;overflow:auto;padding:12px}
+#res .box{margin:auto 0;background:#fff;border:3px solid var(--fg);box-shadow:7px 7px 0 var(--fg);border-radius:8px;padding:clamp(12px,2.4vw,26px) clamp(14px,3vw,34px);display:grid;gap:clamp(6px,1.2vw,14px);width:min(560px,100%);box-sizing:border-box}
+#res h2{margin:0;font:800 clamp(22px,4vw,44px)/1.1 system-ui,"Noto Sans SC",sans-serif;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+#res .grade{font-size:clamp(34px,6vw,72px);color:#d9473a}
+#res dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:2px 18px;font-size:clamp(13px,1.7vw,17px)}
+#res dt{color:var(--mute)} #res dd{margin:0;font:600 1em ui-monospace,Menlo,monospace;text-align:right}
+#res dd.score{color:#d9473a;font-size:1.3em}
+#res form{display:flex;gap:8px;flex-wrap:wrap}
+#res input{flex:1;min-width:120px;font:inherit;font-size:16px;padding:6px 10px;border:2px solid var(--fg);border-radius:6px}
+#res ol{margin:0;padding-left:1.4em;display:grid;gap:2px;font-size:clamp(13px,1.6vw,16px)}
+#res ol li span{float:right;font-family:ui-monospace,Menlo,monospace} #res ol li.me{color:#d9473a;font-weight:700}
+#res .k{font-size:12px;letter-spacing:.12em;color:var(--mute)}
+@media (max-width:900px),(max-height:520px){#res{padding:6px}#res .box{gap:6px;padding:10px 14px;box-shadow:4px 4px 0 var(--fg);width:min(640px,100%)}#res h2{font-size:22px}#res .grade{font-size:34px}#res dl{grid-template-columns:auto 1fr auto 1fr;font-size:13px}#res dd{padding-right:10px}#res input{font-size:16px;padding:3px 8px}#res ol{font-size:13px}}
+button.solid{background:var(--fg);color:#fff;border-color:var(--fg)}
+</style>
+</head>
+<body>
+<main>
+<div id="wrap"><canvas id="c" width="1920" height="1080" tabindex="0"></canvas>
+<div id="start"><h1 data-t="面条人|Noodle Brawl"></h1><p data-t="同一个游戏，六个开关，打出“打击感”|One little brawler, six switches that make hits feel good"></p><b data-t="点一下或按任意键开始|Tap or press any key"></b></div>
+<div id="res" hidden><div class="box">
+<h2><span data-t="通关！|Cleared!"></span><span class="grade" id="grade"></span></h2>
+<dl id="stats"></dl>
+<form id="nameForm"><input id="name" maxlength="12" autocomplete="off"><button class="solid" data-t="记录成绩|Save"></button></form>
+<div id="boardWrap" hidden><div class="k" data-t="本机最佳|BEST ON THIS DEVICE"></div><ol id="board"></ol></div>
+<div><button id="again" data-t="再来一局|Play again"></button></div>
+</div></div></div>
+<div id="touch"><div class="g"><button data-k="L">◀</button><button data-k="R">▶</button></div>
+<div class="g"><button data-k="D" data-t="冲|Dash"></button><button data-k="J" data-t="跳|Jump"></button><button data-k="A" class="big" data-t="轻拳|Jab"></button><button data-k="B" class="big" data-t="重拳|Punch"></button></div></div>
+<div class="bar keys">
+<span><kbd>A</kbd><kbd>D</kbd> <i data-t="移动|move"></i></span><span><kbd>K</kbd>/<kbd>Space</kbd> <i data-t="跳|jump"></i></span><span><kbd>J</kbd> <i data-t="轻拳|jab"></i></span><span><kbd>L</kbd> <i data-t="重拳|heavy"></i></span><span><kbd>Shift</kbd> <i data-t="冲刺|dash"></i></span>
+<span><kbd>1</kbd>–<kbd>6</kbd> <i data-t="开关|switches"></i></span><span><kbd>R</kbd> <i data-t="重开|restart"></i></span>
+</div>
+<div id="sw"></div>
+<p class="note" data-t="先全关打一遍，再一个个打开试试：战斗规则一点没变，只是“手感”变了。|Play once with everything off, then switch them on one by one: the rules never change, only the feel does."></p>
+</main>
+<script src="sim.js"></script>
+<script src="noodle.js"></script>
+<script src="draw.js"></script>
+<script src="fx.js"></script>
+<script src="sound.js"></script>
+<script>
+// =====================================================================================================================
+// The playable page: input (keyboard, gamepad, touch) → the game (sim.js) at a fixed 60 Hz → the feel effects (fx.js)
+// → the picture (draw.js). Plus the switch buttons, the language, and the results card with a local best-five.
+// =====================================================================================================================
+const N = NOODLE, K = N.K;
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+const startScreen = document.getElementById('start'), resultsCard = document.getElementById('res');
+
+// localStorage can throw (private windows, blocked storage): never let that break the game
+const store = {
+  get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
+  set(key, value) { try { localStorage.setItem(key, value); } catch (e) {} },
+};
+
+const sound = N.Sound();
+const settings = N.fxDefaults(); // { on: which switches are on, p: their parameters } — all off at the start
+const renderOpts = { strip: false };
+let world, fxState, stats, started = false;
+
+function reset() {
+  world = N.world(1, { level: 'full' });
+  fxState = N.fxState();
+  N.update(world);
+  N.camStep(world);
+  stats = { kos: 0, hits: 0, dmg: 0, deaths: 0, combo: 0, best: 0, last: -999, done: false };
+  resultsCard.hidden = true;
+}
+
+// ---------------------------------------------------------------------------------------------------------- results
+// Stats come from the game's own events. A combo = player hits less than 1.5 s apart without being hit in between.
+function track(events) {
+  for (const e of events) {
+    if (e.type === 'hit' && e.att === 0) {
+      stats.hits++;
+      stats.combo = world.tick - stats.last < 90 ? stats.combo + 1 : 1;
+      stats.last = world.tick;
+      stats.best = Math.max(stats.best, stats.combo);
+    }
+    if (e.type === 'hit' && e.def === 0) {
+      stats.dmg += N.MOVES[e.move].dmg;
+      stats.combo = 0;
+    }
+    if (e.type === 'ko') {
+      if (e.id === 0) stats.deaths++;
+      else stats.kos++;
+    }
+  }
+  if (world.clear && !stats.done) {
+    stats.done = true;
+    setTimeout(showResults, 1400); // let the last knockout play out first
+  }
+}
+
+// +100 per enemy, +40 per hit of the best combo, −4 per damage taken, −500 per time down, +25 per second under 2 minutes
+function score() {
+  const seconds = world.clear / 60;
+  return Math.max(0, Math.round(stats.kos * 100 + stats.best * 40 - stats.dmg * 4 - stats.deaths * 500 + Math.max(0, 120 - seconds) * 25));
+}
+const gradeOf = (sc) => (sc >= 4200 ? 'S' : sc >= 3400 ? 'A' : sc >= 2600 ? 'B' : 'C');
+
+let board = []; // the best five runs on this device: { name, score, grade, time, at }
+try { board = JSON.parse(store.get('noodle-board') || '[]'); } catch (e) {}
+
+function showResults() {
+  const seconds = world.clear / 60, sc = score();
+  stats.score = sc;
+  const rows = [
+    [N.T('Time', '用时'), seconds.toFixed(1) + N.T(' s', ' 秒')],
+    [N.T('Enemies down', '打倒'), stats.kos],
+    [N.T('Best combo', '最高连击'), stats.best],
+    [N.T('Damage taken', '受到伤害'), stats.dmg],
+    [N.T('Times down', '自己倒下'), stats.deaths],
+  ];
+  document.getElementById('stats').innerHTML =
+    rows.map(([label, value]) => `<dt>${label}</dt><dd>${value}</dd>`).join('') +
+    `<dt>${N.T('Score', '总分')}</dt><dd class="score">${sc}</dd>`;
+  document.getElementById('grade').textContent = gradeOf(sc);
+  document.getElementById('nameForm').hidden = false;
+  const nameInput = document.getElementById('name');
+  nameInput.value = store.get('noodle-name') || '';
+  nameInput.placeholder = N.T('Your name', '你的名字');
+  drawBoard(-1);
+  resultsCard.hidden = false;
+  setTimeout(() => nameInput.focus(), 50);
+}
+
+function drawBoard(highlight) {
+  document.getElementById('boardWrap').hidden = !board.length;
+  document.getElementById('board').innerHTML = board
+    .map((r, i) => `<li class="${i === highlight ? 'me' : ''}">${r.name.replace(/[<>&]/g, '')} <span>${r.score} · ${r.grade} · ${r.time}s</span></li>`)
+    .join('');
+}
+
+document.getElementById('nameForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = (document.getElementById('name').value.trim() || N.T('Noodle', '面条人')).slice(0, 12);
+  store.set('noodle-name', name);
+  const run = { name, score: stats.score, grade: gradeOf(stats.score), time: (world.clear / 60).toFixed(1), at: Date.now() };
+  board.push(run);
+  board.sort((a, b) => b.score - a.score);
+  board = board.slice(0, 5);
+  store.set('noodle-board', JSON.stringify(board));
+  e.target.hidden = true;
+  drawBoard(board.indexOf(run));
+});
+document.getElementById('again').onclick = () => {
+  reset();
+  canvas.focus();
+};
+reset();
+
+// ------------------------------------------------------------------------------------------- switches & language
+const switchBar = document.getElementById('sw'), switchButtons = {};
+N.FX_INFO.forEach(([key]) => {
+  const button = document.createElement('button');
+  button.onclick = () => {
+    settings.on[key] = !settings.on[key];
+    syncSwitches();
+  };
+  switchButtons[key] = button;
+  switchBar.appendChild(button);
+});
+const setAll = (value) => () => {
+  for (const [key] of N.FX_INFO) settings.on[key] = value;
+  syncSwitches();
+};
+const allOff = document.createElement('button'), allOn = document.createElement('button'), langButton = document.createElement('button');
+allOff.dataset.t = '全关|All off';
+allOn.dataset.t = '全开|All on';
+allOff.onclick = setAll(false);
+allOn.onclick = setAll(true);
+langButton.onclick = () => {
+  N.LANG = N.LANG === 'en' ? 'zh' : 'en';
+  store.set('noodle-lang', N.LANG);
+  applyLanguage();
+};
+switchBar.append(allOff, allOn, langButton);
+
+function syncSwitches() {
+  for (const [key] of N.FX_INFO) switchButtons[key].classList.toggle('on', settings.on[key]);
+  sound.vol = settings.p.vol;
+}
+
+N.LANG = store.get('noodle-lang') || (/^zh/i.test(navigator.language || 'zh') ? 'zh' : 'en');
+function applyLanguage() {
+  document.documentElement.lang = N.LANG;
+  for (const el of document.querySelectorAll('[data-t]')) { // data-t="中文|English"
+    const [zh, en] = el.dataset.t.split('|');
+    el.textContent = N.LANG === 'en' ? en : zh;
+  }
+  N.FX_INFO.forEach(([key, zh, en], i) => (switchButtons[key].textContent = `${i + 1} ${N.T(en, zh)}`));
+  langButton.textContent = N.LANG === 'en' ? '中文' : 'EN';
+}
+syncSwitches();
+applyLanguage();
+
+// ------------------------------------------------------------------------------------------------------------ input
+// `held` = buttons held now. `latched` = buttons pressed since the last game step: during hit-stop the game doesn't step,
+// and a quick tap in that time would otherwise be lost.
+const KEYS = {
+  KeyA: K.L, ArrowLeft: K.L, KeyD: K.R, ArrowRight: K.R,
+  KeyK: K.J, Space: K.J, KeyW: K.J, ArrowUp: K.J,
+  KeyJ: K.A, KeyL: K.B, ShiftLeft: K.D, ShiftRight: K.D,
+};
+let held = 0, latched = 0, touchHeld = 0;
+
+function begin() {
+  if (!started) {
+    started = true;
+    startScreen.hidden = true;
+    reset();
+  }
+  sound.unlock(); // browsers only allow audio after a key press / tap
+}
+
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return; // typing a name
+  if (KEYS[e.code]) {
+    held |= KEYS[e.code];
+    latched |= KEYS[e.code];
+    e.preventDefault();
+  }
+  if (e.repeat) return;
+  begin();
+  const digit = /^Digit([1-6])$/.exec(e.code);
+  if (digit) {
+    const key = N.FX_INFO[+digit[1] - 1][0];
+    settings.on[key] = !settings.on[key];
+    syncSwitches();
+  }
+  if (e.code === 'KeyR') reset();
+});
+addEventListener('keyup', (e) => {
+  if (KEYS[e.code]) held &= ~KEYS[e.code];
+});
+addEventListener('blur', () => {
+  held = 0;
+  touchHeld = 0;
+});
+startScreen.onclick = () => {
+  begin();
+  canvas.focus();
+};
+
+// on-screen buttons (phones): each holds its bit while pressed
+for (const button of document.querySelectorAll('#touch button')) {
+  const bit = K[button.dataset.k];
+  button.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    button.setPointerCapture(e.pointerId);
+    touchHeld |= bit;
+    latched |= bit;
+    begin();
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(type, () => (touchHeld &= ~bit));
+  button.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+// gamepads (standard layout): stick / d-pad move, A jump, X jab, Y heavy, B / RB / RT dash, Start restarts
+let padPrev = 0, startPrev = false;
+function readGamepads() {
+  let mask = 0;
+  for (const pad of navigator.getGamepads ? navigator.getGamepads() : []) {
+    if (!pad) continue;
+    const down = (i) => pad.buttons[i] && pad.buttons[i].pressed;
+    const x = pad.axes[0] || 0;
+    if (x < -0.35 || down(14)) mask |= K.L;
+    if (x > 0.35 || down(15)) mask |= K.R;
+    if (down(0)) mask |= K.J;
+    if (down(2)) mask |= K.A;
+    if (down(3)) mask |= K.B;
+    if (down(1) || down(5) || down(7)) mask |= K.D;
+    if (down(9) && !startPrev) reset();
+    startPrev = !!down(9);
+  }
+  if (mask) begin();
+  latched |= mask & ~padPrev;
+  padPrev = mask;
+  return mask;
+}
+
+// ------------------------------------------------------------------------------------------------------------- loop
+// The game runs in fixed 1/60 s steps however fast the screen refreshes. On a frozen frame (hit-stop / slow-mo) the
+// effects still advance, but the game doesn't.
+let pending = 0, lastTime = performance.now();
+const fxRef = {};
+function frame(now) {
+  const dt = Math.min(0.1, (now - lastTime) / 1000);
+  lastTime = now;
+  if (started) {
+    pending += dt;
+    while (pending >= 1 / 60) {
+      pending -= 1 / 60;
+      const mask = held | touchHeld | readGamepads();
+      N.fxTick(fxState, settings);
+      if (fxState.freeze > 0) {
+        fxState.freeze--;
+        continue;
+      }
+      const events = N.step(world, mask | latched);
+      latched = 0;
+      N.update(world);
+      N.fxEvents(fxState, world, events, settings, sound);
+      N.camStep(world);
+      track(events);
+    }
+  }
+  fxRef.fs = fxState;
+  fxRef.cfg = settings;
+  renderOpts.fx = fxRef;
+  N.render(ctx, world, renderOpts);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
