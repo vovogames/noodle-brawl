@@ -6,7 +6,7 @@ A tiny black-and-white stick-figure brawler with six game-feel switches — the 
 白底黑线的面条人横版小游戏。规则（伤害、判定框、出招帧数）一个数字都不改，只靠六个开关决定打起来爽不爽：
 顿帧、震屏、闪白 + 命中特效、受击形变、击退、声音。先全关打一遍，再一个个打开试试。
 
-**Play:** https://vovogames.github.io/noodleman/
+**Play:** https://vovogames.github.io/noodle-brawl/
 
 ## Controls · 操作
 | | Keyboard | Gamepad | Touch |
